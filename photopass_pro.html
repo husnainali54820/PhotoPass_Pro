@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoPass Pro — AI Passport Photos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   RESET & TOKENS
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--bg2:#eeecea;--bg3:#e5e2df;
+  --card:#ffffff;--card2:#faf9f7;
+  --ink:#1a1814;--ink2:#5a5650;--ink3:#9a9590;
+  --red:#d63031;--red2:#e84040;--red3:#ff6b6b;
+  --red-bg:#fdf1f1;--red-border:rgba(214,48,49,.2);
+  --green:#00875a;--green-bg:#e6f7f1;
+  --amber:#b45309;--amber-bg:#fef3c7;
+  --border:#dddad6;--border2:#ccc9c4;
+  --r:10px;--r2:16px;--r3:24px;--r4:32px;
+  --sh:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --sh2:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06);
+  --sh3:0 12px 48px rgba(0,0,0,.15),0 4px 16px rgba(0,0,0,.08);
+  --tr:.15s cubic-bezier(.4,0,.2,1);
+  --font:'Outfit',system-ui,sans-serif;
+  --serif:'Instrument Serif',Georgia,serif;
+}
+html{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:var(--font)}
+button{cursor:pointer;border:none;background:none;color:inherit}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════════ */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ═══════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════ */
+.topbar{
+  height:58px;background:var(--card);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-badge{
+  width:34px;height:34px;background:var(--red);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;box-shadow:0 2px 8px rgba(214,48,49,.35);
+}
+.logo-text{font-weight:700;font-size:17px;letter-spacing:-.3px;color:var(--ink)}
+.logo-text em{color:var(--red);font-style:normal}
+.topbar-nav{display:flex;gap:4px;align-items:center}
+.nav-link{font-size:13px;font-weight:500;color:var(--ink2);padding:6px 12px;border-radius:8px;transition:var(--tr)}
+.nav-link:hover{background:var(--bg2);color:var(--ink)}
+.nav-btn{
+  background:var(--red);color:#fff;padding:8px 18px;border-radius:100px;
+  font-size:13px;font-weight:600;transition:var(--tr);
+  box-shadow:0 2px 8px rgba(214,48,49,.3);
+}
+.nav-btn:hover{background:var(--red2);transform:translateY(-1px)}
+
+/* API Config bar */
+.api-config{
+  background:var(--amber-bg);border-bottom:1px solid rgba(180,83,9,.15);
+  padding:10px 32px;display:flex;align-items:center;gap:10px;font-size:13px;
+}
+.api-config-label{font-weight:600;color:var(--amber);white-space:nowrap}
+.api-config input{
+  flex:1;max-width:400px;padding:6px 12px;border:1.5px solid rgba(180,83,9,.25);
+  border-radius:8px;font-size:13px;background:#fff;color:var(--ink);outline:none;
+  transition:border-color var(--tr);
+}
+.api-config input:focus{border-color:var(--amber)}
+.api-config input::placeholder{color:var(--ink3)}
+.api-save-btn{
+  background:var(--amber);color:#fff;padding:6px 14px;border-radius:7px;
+  font-size:12px;font-weight:700;transition:var(--tr);white-space:nowrap;
+}
+.api-save-btn:hover{opacity:.9}
+.api-dismiss{color:var(--amber);font-size:18px;line-height:1;cursor:pointer;padding:0 4px;margin-left:auto}
+
+/* ═══════════════════════════════════════════════
+   PAGE
+═══════════════════════════════════════════════ */
+.page{max-width:1100px;margin:0 auto;padding:0 20px 80px;width:100%}
+
+/* ═══════════════════════════════════════════════
+   SCREEN SYSTEM
+═══════════════════════════════════════════════ */
+.screen{display:none}
+.screen.on{display:block}
+#s-upload.on{display:flex;flex-direction:column}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 1 — UPLOAD
+═══════════════════════════════════════════════ */
+.upload-wrap{min-height:calc(100vh - 120px);display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+
+.hero{text-align:center;margin-bottom:40px}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--red);background:var(--red-bg);padding:5px 12px;
+  border-radius:100px;border:1px solid var(--red-border);margin-bottom:18px;
+}
+.hero h1{
+  font-family:var(--serif);font-size:clamp(38px,5.5vw,60px);
+  line-height:1.1;color:var(--ink);margin-bottom:14px;
+}
+.hero h1 i{color:var(--red);font-style:italic}
+.hero p{font-size:16px;color:var(--ink2);line-height:1.7;max-width:480px;margin:0 auto 28px}
+.hero-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pill{
+  font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;
+  border:1px solid var(--border2);color:var(--ink2);background:var(--card);
+}
+
+/* Drop zone */
+.drop{
+  border:2px dashed var(--border2);border-radius:var(--r4);background:var(--card);
+  padding:64px 32px;text-align:center;cursor:pointer;
+  transition:border-color var(--tr),background var(--tr);
+  position:relative;
+}
+.drop::before{
+  content:'';position:absolute;inset:0;border-radius:var(--r4);
+  background:radial-gradient(ellipse at 50% 0%,rgba(214,48,49,.04),transparent 60%);
+  pointer-events:none;
+}
+.drop:hover,.drop.over{border-color:var(--red);background:var(--red-bg)}
+.drop input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.drop-ico{
+  width:64px;height:64px;margin:0 auto 20px;border-radius:20px;
+  background:var(--bg2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  transition:var(--tr);
+}
+.drop:hover .drop-ico,.drop.over .drop-ico{background:var(--red-bg);border-color:var(--red-border)}
+.drop h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.drop p{font-size:14px;color:var(--ink2)}
+.drop-cta{
+  display:inline-flex;align-items:center;gap:8px;margin-top:22px;
+  background:var(--red);color:#fff;border-radius:100px;
+  padding:13px 30px;font-size:15px;font-weight:600;
+  box-shadow:0 4px 16px rgba(214,48,49,.3);transition:var(--tr);
+}
+.drop-cta:hover{background:var(--red2);transform:translateY(-2px);box-shadow:0 6px 24px rgba(214,48,49,.35)}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 2 — PROCESSING
+═══════════════════════════════════════════════ */
+#s-processing.on{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 120px)}
+.proc{text-align:center;max-width:360px;width:100%;padding:20px}
+.proc-ring{
+  width:68px;height:68px;margin:0 auto 28px;
+  border:3px solid var(--bg3);border-top-color:var(--red);
+  border-radius:50%;animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc h2{font-family:var(--serif);font-size:26px;margin-bottom:8px}
+.proc p{font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:24px}
+.steps{display:flex;flex-direction:column;gap:6px;text-align:left}
+.stp{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+  font-size:13px;font-weight:500;color:var(--ink3);background:var(--card);
+  transition:var(--tr);
+}
+.stp.on{border-color:var(--red-border);background:var(--red-bg);color:var(--red)}
+.stp.done{border-color:rgba(0,135,90,.25);background:var(--green-bg);color:var(--green)}
+.stp-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.stp-ico{font-size:14px;width:18px;text-align:center}
+.proc-cancel{
+  margin-top:16px;font-size:13px;color:var(--ink3);
+  padding:8px 16px;border-radius:8px;border:1px solid var(--border);
+  transition:var(--tr);display:inline-block;
+}
+.proc-cancel:hover{background:var(--bg2);color:var(--ink)}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 3 — RESULT
+═══════════════════════════════════════════════ */
+#s-result.on{display:block;padding-top:24px}
+
+/* Config strip */
+.cfg{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r3);
+  padding:14px 18px;margin-bottom:20px;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+}
+.cfg-g{flex:1;min-width:130px}
+.cfg-lbl{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.cfg-sel{
+  width:100%;padding:8px 32px 8px 10px;border-radius:8px;font-size:13px;font-weight:500;
+  color:var(--ink);background:var(--bg2);border:1px solid var(--border2);
+  appearance:none;outline:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239a9590' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  transition:border-color var(--tr);
+}
+.cfg-sel:focus{border-color:var(--red)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  display:flex;align-items:center;gap:5px;
+  padding:7px 12px;border:1.5px solid var(--border2);border-radius:100px;
+  font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;
+  transition:var(--tr);user-select:none;background:var(--card);
+}
+.chip input{display:none}
+.chip.on{background:var(--red-bg);border-color:rgba(214,48,49,.4);color:var(--red)}
+.chip:hover{border-color:var(--red2)}
+.gen-btn{
+  display:flex;align-items:center;gap:7px;
+  background:var(--red);color:#fff;border-radius:10px;
+  padding:9px 20px;font-size:14px;font-weight:700;
+  box-shadow:0 2px 12px rgba(214,48,49,.25);transition:var(--tr);
+  white-space:nowrap;position:relative;overflow:hidden;
+}
+.gen-btn:hover{background:var(--red2);transform:translateY(-1px)}
+.gen-btn:disabled{opacity:.55;pointer-events:none}
+.gen-btn.loading::after{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  animation:shimmer 1.2s infinite;
+}
+@keyframes shimmer{to{left:200%}}
+
+/* Result grid */
+.result-grid{display:grid;grid-template-columns:1fr 340px;gap:20px}
+@media(max-width:780px){.result-grid{grid-template-columns:1fr}}
+
+/* Preview card */
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden;box-shadow:var(--sh)}
+.pcard-head{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.pcard-title{font-size:14px;font-weight:700}
+.ptabs{display:flex;gap:2px;background:var(--bg2);border-radius:8px;padding:3px}
+.ptab{padding:5px 13px;border-radius:6px;font-size:12px;font-weight:600;color:var(--ink2);transition:var(--tr);cursor:pointer}
+.ptab.on{background:var(--red);color:#fff;box-shadow:0 1px 4px rgba(214,48,49,.3)}
+/* Photo tab */
+.photo-area{
+  min-height:320px;display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background:repeating-conic-gradient(var(--bg2) 0% 25%,var(--bg) 0% 50%) 0 0/16px 16px;
+  position:relative;
+}
+.photo-area.solid{background:var(--bg2)}
+.photo-area img{max-height:480px;object-fit:contain;box-shadow:var(--sh3)}
+/* Generating overlay */
+.photo-area .gen-overlay{
+  position:absolute;inset:0;background:rgba(247,246,243,.85);
+  backdrop-filter:blur(4px);display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  border-radius:0;
+}
+.photo-area .gen-overlay.show{display:flex}
+.gen-overlay-ring{
+  width:48px;height:48px;border:3px solid var(--bg3);border-top-color:var(--red);
+  border-radius:50%;animation:spin 1s linear infinite;
+}
+.gen-overlay-txt{font-size:14px;font-weight:600;color:var(--ink2)}
+/* Sheet tab */
+.sheet-area{min-height:320px;padding:20px;background:var(--bg);display:none}
+.sheet-area img{width:100%;box-shadow:var(--sh2)}
+/* Card footer */
+.pcard-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+.dl-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--red);color:#fff;border-radius:9px;padding:11px 0;
+  font-size:14px;font-weight:700;transition:var(--tr);
+}
+.dl-btn:hover{background:var(--red2)}
+.sheet-btn{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:9px;
+  padding:11px 14px;font-size:13px;font-weight:600;color:var(--ink2);
+  transition:var(--tr);
+}
+.sheet-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* Side */
+.side{display:flex;flex-direction:column;gap:14px}
+
+/* Quality card */
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh)}
+.qcard-head{
+  padding:12px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.qcard-title{font-size:13px;font-weight:700}
+.q-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:100px}
+.q-badge.good{background:var(--green-bg);color:var(--green)}
+.q-badge.warn{background:var(--amber-bg);color:var(--amber)}
+.q-badge.bad{background:var(--red-bg);color:var(--red)}
+.q-rows{padding:2px 0}
+.q-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 14px;font-size:12px;transition:background var(--tr);
+}
+.q-row:hover{background:var(--bg2)}
+.q-l{color:var(--ink2)}
+.q-v{font-weight:700;font-size:12px}
+.q-v.ok{color:var(--green)}
+.q-v.warn{color:var(--amber)}
+.q-v.bad{color:var(--red)}
+.q-div{height:1px;background:var(--border);margin:2px 0}
+.issues{padding:8px 14px 12px;display:flex;flex-direction:column;gap:4px}
+.iss{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--ink2);line-height:1.5}
+.iss-d{margin-top:5px;width:5px;height:5px;border-radius:50%;flex-shrink:0;background:var(--amber)}
+.iss-d.ok{background:var(--green)}
+
+/* Print card */
+.ocard{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh)}
+.ocard-head{padding:12px 14px;border-bottom:1px solid var(--border)}
+.ocard-title{font-size:13px;font-weight:700}
+.ocard-body{padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.dl-sheet-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--red);color:#fff;border-radius:9px;
+  padding:11px 0;font-size:14px;font-weight:700;transition:var(--tr);
+}
+.dl-sheet-btn:hover{background:var(--red2)}
+.new-photo{
+  display:flex;align-items:center;gap:6px;
+  font-size:13px;color:var(--ink3);padding:8px 4px;
+  border-radius:8px;cursor:pointer;transition:var(--tr);
+}
+.new-photo:hover{color:var(--ink2)}
+
+/* ═══════════════════════════════════════════════
+   SHEET MODAL
+═══════════════════════════════════════════════ */
+.overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(26,24,20,.6);
+  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r4);
+  width:100%;max-width:940px;max-height:92vh;display:flex;flex-direction:column;
+  overflow:hidden;box-shadow:var(--sh3);
+}
+.modal-top{
+  padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-top h2{font-family:var(--serif);font-size:18px}
+.modal-top-r{display:flex;gap:8px;align-items:center}
+.modal-done{
+  background:var(--red);color:#fff;border-radius:8px;
+  padding:7px 20px;font-size:14px;font-weight:700;transition:var(--tr);
+}
+.modal-done:hover{background:var(--red2)}
+.modal-x{
+  width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:16px;color:var(--ink2);cursor:pointer;transition:var(--tr);
+}
+.modal-x:hover{background:var(--bg2);color:var(--ink)}
+.modal-body{display:flex;flex:1;overflow:hidden}
+.modal-side{
+  width:228px;flex-shrink:0;border-right:1px solid var(--border);
+  padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;
+}
+.msec-lbl{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.m-sel{
+  width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:8px;font-size:12px;color:var(--ink);outline:none;
+  transition:border-color var(--tr);appearance:none;cursor:pointer;
+}
+.m-sel:focus{border-color:var(--red)}
+.preset-search{
+  width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:8px;font-size:12px;color:var(--ink);outline:none;transition:border-color var(--tr);
+}
+.preset-search::placeholder{color:var(--ink3)}
+.preset-search:focus{border-color:var(--red)}
+.presets{display:flex;flex-direction:column;gap:4px;overflow-y:auto;max-height:320px}
+.preset{
+  padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;
+  text-align:left;cursor:pointer;transition:var(--tr);background:var(--bg2);
+}
+.preset:hover{border-color:var(--border2)}
+.preset.sel{border-color:rgba(214,48,49,.4);background:var(--red-bg)}
+.preset-n{font-size:12px;font-weight:700;color:var(--ink);display:block}
+.preset-d{font-size:11px;color:var(--ink3)}
+.modal-main{flex:1;padding:20px;overflow-y:auto;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:12px}
+.m-sheet-img{max-width:100%;border:1px solid var(--border);box-shadow:var(--sh2)}
+.m-sheet-info{font-size:12px;color:var(--ink2);text-align:center}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--card);border:1px solid var(--border2);border-radius:10px;
+  padding:12px 18px;font-size:13px;font-weight:600;box-shadow:var(--sh3);
+  transform:translateY(80px);opacity:0;transition:.28s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;display:flex;align-items:center;gap:8px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(0,135,90,.3);color:var(--green)}
+.toast.err{border-color:var(--red-border);color:var(--red)}
+.toast.info{border-color:var(--border2);color:var(--ink2)}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:20px 32px;text-align:center;font-size:12px;color:var(--ink3)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TOPBAR ═══════════ -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-badge">🛂</div>
+    <span class="logo-text">Photo<em>Pass</em> Pro</span>
+  </div>
+  <nav class="topbar-nav">
+    <a class="nav-link" href="#">Home</a>
+    <a class="nav-link" href="#">Countries</a>
+    <button class="nav-btn" onclick="document.getElementById('fileInput').click()">Upload Photo</button>
+  </nav>
+</header>
+
+<!-- API Config Banner -->
+<div class="api-config" id="apiBanner">
+  <span class="api-config-label">⚙️ Backend URL:</span>
+  <input id="apiUrlInput" type="text" placeholder="https://xxxx.gradio.live" spellcheck="false">
+  <button class="api-save-btn" onclick="saveApiUrl()">Save</button>
+  <span class="api-dismiss" onclick="dismissApiBanner()" title="Dismiss">✕</span>
+</div>
+
+<div class="page">
+
+<!-- ═══════════ SCREEN 1: UPLOAD ═══════════ -->
+<div id="s-upload" class="screen on">
+  <div class="upload-wrap">
+    <div class="hero">
+      <div class="hero-tag">✦ ICAO-Compliant · AI-Powered · 300 DPI</div>
+      <h1>Passport Photos,<br><i>Done Right</i></h1>
+      <p>Professional passport photos for 25+ countries. Instant background removal, perfect crop, print-ready layouts.</p>
+      <div class="hero-pills">
+        <span class="pill">🧠 InsightFace SCRFD</span>
+        <span class="pill">✂️ BiRefNet Matting</span>
+        <span class="pill">✨ GFPGAN Restore</span>
+        <span class="pill">🖨️ Print Sheets</span>
+      </div>
+    </div>
+
+    <div class="drop" id="dropZone">
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+      <div class="drop-ico">📷</div>
+      <h2>Drop your photo here</h2>
+      <p>JPG · PNG · WEBP · up to 20 MB</p>
+      <div class="drop-cta">⬆ Choose Photo</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCREEN 2: PROCESSING ═══════════ -->
+<div id="s-processing" class="screen">
+  <div class="proc">
+    <div class="proc-ring"></div>
+    <h2 id="procTitle">Analyzing photo…</h2>
+    <p id="procSub">Loading AI models on first run (30–60s)</p>
+    <div class="steps">
+      <div class="stp on" id="st0"><div class="stp-dot"></div><span class="stp-ico">🔍</span>Face detection &amp; quality analysis</div>
+      <div class="stp"    id="st1"><div class="stp-dot"></div><span class="stp-ico">✂️</span>BiRefNet background removal</div>
+      <div class="stp"    id="st2"><div class="stp-dot"></div><span class="stp-ico">📐</span>Face alignment &amp; ICAO crop</div>
+      <div class="stp"    id="st3"><div class="stp-dot"></div><span class="stp-ico">✨</span>Enhancement &amp; final render</div>
+    </div>
+    <button class="proc-cancel" onclick="cancelAndReset()">← Cancel</button>
+  </div>
+</div>
+
+<!-- ═══════════ SCREEN 3: RESULT ═══════════ -->
+<div id="s-result" class="screen">
+
+  <!-- Config strip -->
+  <div class="cfg">
+    <div class="cfg-g">
+      <div class="cfg-lbl">Country</div>
+      <select class="cfg-sel" id="selCountry"></select>
+    </div>
+    <div class="cfg-g">
+      <div class="cfg-lbl">Background</div>
+      <select class="cfg-sel" id="selBg">
+        <option value="White">White</option>
+        <option value="Off-White">Off-White</option>
+        <option value="Light Gray">Light Gray</option>
+        <option value="Light Blue">Light Blue</option>
+        <option value="Blue">Blue</option>
+      </select>
+    </div>
+    <div style="flex:2">
+      <div class="cfg-lbl">Enhancement Options</div>
+      <div class="chips">
+        <label class="chip on" id="chipEnhance"><input type="checkbox" id="optEnhance" checked>🧠 Face Enhance</label>
+        <label class="chip"    id="chipUpscale"><input type="checkbox" id="optUpscale">🔬 4× Upscale</label>
+        <label class="chip on" id="chipAuto"   ><input type="checkbox" id="optAuto" checked>✨ Auto Correct</label>
+      </div>
+    </div>
+    <div>
+      <div class="cfg-lbl">&nbsp;</div>
+      <button class="gen-btn" id="genBtn" onclick="runStep2()">⚡ Generate</button>
+    </div>
+  </div>
+
+  <!-- Result grid -->
+  <div class="result-grid">
+
+    <!-- Left: preview -->
+    <div class="pcard">
+      <div class="pcard-head">
+        <span class="pcard-title">Result Preview</span>
+        <div class="ptabs">
+          <button class="ptab on" onclick="switchTab('photo',this)">Photo</button>
+          <button class="ptab"    onclick="switchTab('sheet',this)">Print Sheet</button>
+        </div>
+      </div>
+
+      <!-- Photo tab -->
+      <div id="tabPhoto">
+        <div class="photo-area solid" id="photoArea">
+          <img id="resultImg" src="" alt="Passport photo">
+          <!-- Inline generating overlay -->
+          <div class="gen-overlay" id="genOverlay">
+            <div class="gen-overlay-ring"></div>
+            <div class="gen-overlay-txt" id="genOverlayTxt">Generating…</div>
+          </div>
+        </div>
+        <div class="pcard-foot">
+          <button class="dl-btn" onclick="dlPhoto()">⬇ Download Photo</button>
+          <button class="sheet-btn" onclick="openModal()">🖨️ Sheet</button>
+        </div>
+      </div>
+
+      <!-- Sheet tab -->
+      <div id="tabSheet" style="display:none">
+        <div class="sheet-area" id="sheetArea" style="display:block">
+          <img id="sheetImg" src="" alt="Print sheet" style="width:100%">
+        </div>
+        <div class="pcard-foot">
+          <button class="dl-btn" onclick="dlSheet()">⬇ Download Print Sheet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: side panel -->
+    <div class="side">
+
+      <!-- Quality report -->
+      <div class="qcard">
+        <div class="qcard-head">
+          <span class="qcard-title">📊 Quality Report</span>
+          <span class="q-badge good" id="qBadge">Good</span>
+        </div>
+        <div class="q-rows" id="qRows"></div>
+        <div class="q-div"></div>
+        <div class="issues" id="issuesWrap"></div>
+      </div>
+
+      <!-- Print options -->
+      <div class="ocard">
+        <div class="ocard-head"><span class="ocard-title">🖨️ Print Options</span></div>
+        <div class="ocard-body">
+          <div>
+            <div class="cfg-lbl">Paper Size</div>
+            <select class="cfg-sel" id="selPaper" style="width:100%">
+              <option value="A4 (210x297mm)">A4 — 210×297mm</option>
+              <option value="4x6 inch">4×6 inch</option>
+              <option value="5x7 inch">5×7 inch</option>
+              <option value="A5 (148x210mm)">A5 — 148×210mm</option>
+              <option value="3.5x5 inch">3.5×5 inch</option>
+              <option value="Letter (8.5x11)">Letter 8.5×11"</option>
+            </select>
+          </div>
+          <button class="sheet-btn" style="width:100%;justify-content:center" onclick="openModal()">🖨️ Customize Sheet</button>
+          <button class="dl-sheet-btn" onclick="dlSheet()">⬇ Download Sheet</button>
+          <div class="new-photo" onclick="cancelAndReset()">← Upload a different photo</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- .page -->
+
+<!-- ═══════════ SHEET MODAL ═══════════ -->
+<div class="overlay" id="sheetOverlay">
+  <div class="modal">
+    <div class="modal-top">
+      <h2>🖨️ Print Sheet Editor</h2>
+      <div class="modal-top-r">
+        <button class="modal-done" onclick="applyModal()">Done</button>
+        <button class="modal-x" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-side">
+        <div>
+          <div class="msec-lbl">Paper Size</div>
+          <select class="m-sel" id="modalPaper" onchange="updateModalInfo()">
+            <option value="A4 (210x297mm)">A4 (29.7×21cm)</option>
+            <option value="4x6 inch">4×6 inch</option>
+            <option value="5x7 inch">5×7 inch</option>
+            <option value="A5 (148x210mm)">A5</option>
+            <option value="3.5x5 inch">3.5×5 inch</option>
+            <option value="Letter (8.5x11)">Letter 8.5×11"</option>
+          </select>
+        </div>
+        <div>
+          <div class="msec-lbl">Photo Size</div>
+          <input class="preset-search" type="text" placeholder="Search country…" oninput="filterPresets(this.value)">
+        </div>
+        <div class="presets" id="presetList"></div>
+      </div>
+      <div class="modal-main">
+        <img class="m-sheet-img" id="modalSheetImg" src="" alt="Sheet preview">
+        <div class="m-sheet-info" id="modalInfo"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<footer>PhotoPass Pro · InsightFace · BiRefNet · GFPGAN · Real-ESRGAN · ICAO Doc 9303 · 300 DPI</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIGURATION
+═══════════════════════════════════════════════════════════ */
+let API_URL = localStorage.getItem('pp_api_url') || '';
+
+// Populate API URL field on load
+window.addEventListener('DOMContentLoaded', () => {
+  if (API_URL) {
+    document.getElementById('apiUrlInput').value = API_URL;
+    document.getElementById('apiBanner').style.display = 'none';
+  }
+  init();
+});
+
+function saveApiUrl() {
+  const v = document.getElementById('apiUrlInput').value.trim().replace(/\/$/, '');
+  if (!v) { toast('Enter a valid URL', 'err'); return; }
+  API_URL = v;
+  localStorage.setItem('pp_api_url', API_URL);
+  document.getElementById('apiBanner').style.display = 'none';
+  toast('✓ API URL saved', 'ok');
+}
+
+function dismissApiBanner() {
+  document.getElementById('apiBanner').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COUNTRY & PRESET DATA
+═══════════════════════════════════════════════════════════ */
+const COUNTRIES = [
+  ['Pakistan','413×531px','35×45mm'],['India','413×531px','35×45mm'],
+  ['USA','600×600px','51×51mm'],['UK','413×531px','35×45mm'],
+  ['Canada','420×540px','35×45mm'],['Australia','413×531px','35×45mm'],
+  ['Europe/Schengen','413×531px','35×45mm'],['China','390×567px','33×48mm'],
+  ['Japan','413×531px','35×45mm'],['UAE','413×531px','35×45mm'],
+  ['Saudi Arabia','413×531px','35×45mm'],['Bangladesh','413×531px','35×45mm'],
+  ['Turkey','413×531px','35×45mm'],['Germany','413×531px','35×45mm'],
+  ['France','413×531px','35×45mm'],['Italy','413×531px','35×45mm'],
+  ['Spain','413×531px','35×45mm'],['Russia','378×472px','30×40mm'],
+  ['Brazil','413×531px','35×45mm'],['Mexico','413×531px','35×45mm'],
+  ['South Korea','413×531px','35×45mm'],['Singapore','378×472px','35×45mm'],
+  ['Malaysia','413×531px','35×45mm'],['Nigeria','413×531px','35×45mm'],
+  ['Egypt','413×531px','35×45mm'],
+];
+
+/* ═══════════════════════════════════════════════════════════
+   APP STATE
+═══════════════════════════════════════════════════════════ */
+const S = {
+  uploadDataUrl: null,
+  resultUrl: null,
+  sheetUrl: null,
+  quality: null,
+  country: 'Pakistan',
+  bg: 'White',
+  enhance: true,
+  upscale: false,
+  autocorr: true,
+  paper: 'A4 (210x297mm)',
+  modalCountry: 'Pakistan',
+  generating: false,
+};
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+function init() {
+  // Populate country dropdown
+  const sel = document.getElementById('selCountry');
+  COUNTRIES.forEach(([name]) => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    if (name === 'Pakistan') o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', e => { S.country = e.target.value; });
+  document.getElementById('selBg').addEventListener('change', e => { S.bg = e.target.value; });
+  document.getElementById('selPaper').addEventListener('change', e => { S.paper = e.target.value; });
+
+  // Toggle chips — ALL START ACTIVE
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('on');
+      chip.querySelector('input').checked = chip.classList.contains('on');
+    });
+  });
+
+  // Drag & drop
+  const zone = document.getElementById('dropZone');
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  // Build modal preset list
+  renderPresets(COUNTRIES);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FILE LOADING
+═══════════════════════════════════════════════════════════ */
+function loadFile(file) {
+  if (!file.type.startsWith('image/')) { toast('Please upload a JPEG, PNG or WEBP image', 'err'); return; }
+  if (file.size > 20 * 1024 * 1024) { toast('Image too large — max 20 MB', 'err'); return; }
+  if (!API_URL) {
+    document.getElementById('apiBanner').style.display = 'flex';
+    toast('Set your backend API URL first ↑', 'err'); return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => { S.uploadDataUrl = e.target.result; runStep1(); };
+  reader.readAsDataURL(file);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+═══════════════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+function stDone(i)   { const el=document.getElementById('st'+i); el.classList.remove('on'); el.classList.add('done'); }
+function stActive(i) { document.getElementById('st'+i).classList.add('on'); }
+function stReset()   { for(let i=0;i<4;i++){ const el=document.getElementById('st'+i); el.classList.remove('on','done'); } }
+
+function cancelAndReset() {
+  S.uploadDataUrl = S.resultUrl = S.sheetUrl = S.quality = null;
+  document.getElementById('fileInput').value = '';
+  showScreen('s-upload');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GRADIO 3.x API
+   POST /api/<endpoint>  { "data": [...] }  →  { "data": [...] }
+═══════════════════════════════════════════════════════════ */
+async function gradio(endpoint, inputs) {
+  const url = `${API_URL.replace(/\/$/, '')}/api/${endpoint}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: inputs }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(`HTTP ${res.status} — ${txt.slice(0, 200)}`);
+  }
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json.data;
+}
+
+/** Normalize Gradio image output → always returns a usable src URL */
+function imgSrc(val) {
+  if (!val) return null;
+  if (typeof val === 'string') return val;
+  if (val.data)  return val.data;
+  if (val.url)   return API_URL.replace(/\/$/, '') + val.url;
+  if (val.name && val.is_file) return `${API_URL.replace(/\/$/, '')}/file=${val.name}`;
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STEP 1 — Upload, Analyze, Remove BG, Align
+═══════════════════════════════════════════════════════════ */
+async function runStep1() {
+  stReset();
+  showScreen('s-processing');
+  setProc('Analyzing photo…', 'Loading AI models on first run (30–60s)');
+  stActive(0);
+
+  try {
+    const res = await gradio('step1', [S.uploadDataUrl]);
+    // res[0] = preview image,  res[1] = quality JSON string
+
+    stDone(0); stActive(1);
+    setProc('Background removed…', 'Aligning face…');
+
+    const previewUrl = imgSrc(res[0]);
+    let quality = {};
+    try { quality = JSON.parse(res[1]); } catch { quality = { ok: true, issues: ['Ready'] }; }
+    S.quality = quality;
+
+    if (!quality.ok) {
+      toast(quality.issues?.[0] || 'Analysis failed', 'err');
+      showScreen('s-upload'); return;
+    }
+
+    // Store preview URL for reuse
+    if (previewUrl) S.uploadDataUrl = previewUrl;
+
+    stDone(1); stActive(2);
+    setProc('Generating passport photo…', 'Applying ICAO crop and enhancements…');
+
+    // Chain directly to step 2
+    await runStep2(true);
+
+  } catch (err) {
+    console.error('Step1:', err);
+    showScreen('s-upload');
+    toast('Error: ' + err.message.slice(0, 80), 'err');
+    setTimeout(() => alert('API Error (Step 1):\n\n' + err.message + '\n\nCheck:\n• Is Colab notebook running?\n• Is the API URL correct?'), 200);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STEP 2 — Generate passport photo + sheet
+   Can be called standalone (re-generate with new options)
+   or chained from step1 (fromStep1=true)
+═══════════════════════════════════════════════════════════ */
+async function runStep2(fromStep1 = false) {
+  if (S.generating) return;
+  S.generating = true;
+
+  // Read current settings from UI
+  S.country  = document.getElementById('selCountry').value;
+  S.bg       = document.getElementById('selBg').value;
+  S.enhance  = document.getElementById('optEnhance').checked;
+  S.upscale  = document.getElementById('optUpscale').checked;
+  S.autocorr = document.getElementById('optAuto').checked;
+  S.paper    = document.getElementById('selPaper').value;
+
+  if (!fromStep1) {
+    // Show inline overlay on existing result image (don't go to processing screen)
+    showGenOverlay(true, 'Regenerating…');
+  } else {
+    stActive(2);
+    stActive(3);
+    setProc('Enhancing & finalizing…', 'GFPGAN + print sheet…');
+  }
+
+  // Disable generate button
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true; btn.classList.add('loading');
+
+  try {
+    const res = await gradio('step2', [
+      null,          // _image — backend uses session state from step1
+      S.country,
+      S.bg,
+      S.enhance,
+      S.upscale,
+      S.autocorr,
+      true,          // always make sheet
+      S.paper,
+    ]);
+    // res[0]=passport photo, res[1]=print sheet, res[2]=status JSON
+
+    S.resultUrl = imgSrc(res[0]);
+    S.sheetUrl  = imgSrc(res[1]);
+
+    let status = {};
+    try { status = JSON.parse(res[2]); } catch {}
+
+    if (fromStep1) {
+      stDone(2); stDone(3);
+    }
+
+    showGenOverlay(false);
+    showResultScreen(status);
+
+  } catch (err) {
+    console.error('Step2:', err);
+    showGenOverlay(false);
+    if (fromStep1) showScreen('s-upload');
+    toast('Generation failed: ' + err.message.slice(0, 80), 'err');
+  } finally {
+    S.generating = false;
+    btn.disabled = false; btn.classList.remove('loading');
+  }
+}
+
+function setProc(title, sub) {
+  document.getElementById('procTitle').textContent = title;
+  document.getElementById('procSub').textContent   = sub;
+}
+
+function showGenOverlay(show, txt = '') {
+  const ov  = document.getElementById('genOverlay');
+  const txt_ = document.getElementById('genOverlayTxt');
+  if (show) { txt_.textContent = txt; ov.classList.add('show'); }
+  else        ov.classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESULT SCREEN
+═══════════════════════════════════════════════════════════ */
+function showResultScreen(status = {}) {
+  if (S.resultUrl) document.getElementById('resultImg').src = S.resultUrl;
+  if (S.sheetUrl)  document.getElementById('sheetImg').src  = S.sheetUrl;
+
+  renderQuality(S.quality, status);
+  showScreen('s-result');
+
+  const t = status.elapsed ? ` (${status.elapsed}s)` : '';
+  toast('✓ Photo ready' + t, 'ok');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   QUALITY REPORT RENDERER
+═══════════════════════════════════════════════════════════ */
+function renderQuality(r, status = {}) {
+  if (!r) return;
+
+  const rows   = document.getElementById('qRows');
+  const issues = document.getElementById('issuesWrap');
+  const badge  = document.getElementById('qBadge');
+
+  function cls(val, lo, hi, invert = false) {
+    if (val == null) return '';
+    const good = invert ? (val >= lo && val <= hi) : (val >= lo);
+    if (good) return 'ok';
+    return val < lo * 0.6 ? 'bad' : 'warn';
+  }
+  function fmt(v, sfx = '') { return v != null ? v + sfx : '–'; }
+  function sign(v) { return v != null ? (v > 0 ? '+' : '') + v : '–'; }
+
+  rows.innerHTML = [
+    ['Sharpness',    fmt(r.sharpness),                  cls(r.sharpness,  80, 9999)],
+    ['Brightness',   fmt(r.brightness),                 cls(r.brightness, 80, 220, true)],
+    ['Contrast',     fmt(r.contrast),                   cls(r.contrast,   40, 9999)],
+    ['Head Tilt',    fmt(r.tilt,   '°', sign),          Math.abs(r.tilt  ||0)<5  ?'ok':'warn'],
+    ['Head Yaw',     fmt(r.yaw,    '°', sign),          Math.abs(r.yaw   ||0)<15 ?'ok':'warn'],
+    ['Detection',    r.confidence ? Math.round(r.confidence*100)+'%' : '–', r.confidence>0.6?'ok':'warn'],
+    ['Shoulders',    r.shoulders ? 'Detected' : 'Not detected', r.shoulders ?'ok':'warn'],
+    r.age ? ['Age / Gender', `${r.age} / ${r.gender||'–'}`, 'ok'] : null,
+    status.country ? ['Country', status.country, 'ok'] : null,
+    status.elapsed  ? ['Time', status.elapsed+'s', 'ok'] : null,
+  ].filter(Boolean).map(([l, v, c]) => {
+    // Reformat tilt/yaw specially
+    let display = v;
+    if (l==='Head Tilt' && r.tilt!=null)  display=(r.tilt>0?'+':'')+r.tilt+'°';
+    if (l==='Head Yaw'  && r.yaw!=null)   display=(r.yaw>0?'+':'')+r.yaw+'°';
+    return `<div class="q-row"><span class="q-l">${l}</span><span class="q-v ${c}">${display}</span></div>`;
+  }).join('');
+
+  const issueList  = r.issues || [];
+  const hasProbs   = issueList.some(i => i !== 'Photo looks good — no issues detected');
+  badge.textContent = hasProbs ? (issueList.length > 2 ? 'Issues' : 'Minor issues') : 'Good';
+  badge.className   = 'q-badge ' + (hasProbs ? (issueList.length > 2 ? 'bad' : 'warn') : 'good');
+
+  issues.innerHTML = issueList.map(i =>
+    `<div class="iss">
+      <div class="iss-d ${i.includes('looks good') ? 'ok' : ''}"></div>
+      <span>${i}</span>
+    </div>`
+  ).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════════════════════════════════ */
+function switchTab(name, btn) {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tabPhoto').style.display = name==='photo' ? 'block' : 'none';
+  document.getElementById('tabSheet').style.display = name==='sheet' ? 'block' : 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DOWNLOADS
+═══════════════════════════════════════════════════════════ */
+function dlPhoto() {
+  if (!S.resultUrl) { toast('Generate a photo first', 'err'); return; }
+  dl(S.resultUrl, `passport_${S.country.replace(/\//g,'_')}_${S.bg.replace(/ /g,'_')}.png`);
+}
+function dlSheet() {
+  if (!S.sheetUrl) { toast('No print sheet available', 'err'); return; }
+  dl(S.sheetUrl, `sheet_${S.country.replace(/\//g,'_')}_${S.paper.replace(/[\s()]/g,'_')}.png`);
+}
+function dl(src, name) {
+  const a = document.createElement('a');
+  a.href = src; a.download = name; a.click();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHEET MODAL
+═══════════════════════════════════════════════════════════ */
+function openModal() {
+  document.getElementById('sheetOverlay').classList.add('open');
+  if (S.sheetUrl) document.getElementById('modalSheetImg').src = S.sheetUrl;
+  updateModalInfo();
+}
+function closeModal() {
+  document.getElementById('sheetOverlay').classList.remove('open');
+}
+async function applyModal() {
+  S.paper         = document.getElementById('modalPaper').value;
+  S.country       = S.modalCountry;
+  document.getElementById('selCountry').value = S.country;
+  document.getElementById('selPaper').value   = S.paper;
+  closeModal();
+  await runStep2();
+}
+function updateModalInfo() {
+  const c  = S.modalCountry;
+  const row = COUNTRIES.find(([n]) => n === c);
+  const px  = row ? row[1] : '413×531px';
+  const mm  = row ? row[2] : '35×45mm';
+  const paper = document.getElementById('modalPaper').value;
+  document.getElementById('modalInfo').textContent = `${c}: ${px} (${mm}) · ${paper}`;
+}
+
+function renderPresets(list) {
+  const container = document.getElementById('presetList');
+  container.innerHTML = '';
+  list.forEach(([name, px, mm]) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset' + (name === S.modalCountry ? ' sel' : '');
+    btn.innerHTML = `<span class="preset-n">${name} (Passport)</span><span class="preset-d">${px} · ${mm}</span>`;
+    btn.onclick = () => {
+      S.modalCountry = name;
+      document.querySelectorAll('.preset').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      updateModalInfo();
+      // Show current sheet or update preview
+      if (S.sheetUrl) document.getElementById('modalSheetImg').src = S.sheetUrl;
+    };
+    container.appendChild(btn);
+  });
+}
+function filterPresets(q) {
+  const filtered = q ? COUNTRIES.filter(([n]) => n.toLowerCase().includes(q.toLowerCase())) : COUNTRIES;
+  renderPresets(filtered);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════ */
+let _tTimer;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  clearTimeout(_tTimer);
+  _tTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
